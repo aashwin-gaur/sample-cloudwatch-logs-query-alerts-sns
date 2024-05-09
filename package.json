@@ -1,0 +1,26 @@
+{
+  "scripts": {
+    "build": "tsc",
+    "package": "npm run build && npm run zip && npm run layer-zip",
+    
+    "zip": "mkdir -p build && zip -r -j build/lambda-package.zip dist/*",
+    "layer-zip": "mkdir -p build && zip -r build/lambda-layer.zip node_modules" 
+  },
+
+  "dependencies": {
+    "@aws-sdk/client-cloudwatch-logs": "^3.572.0",
+    "@aws-sdk/client-sns": "^3.572.0",
+    "@aws-sdk/client-sqs": "^3.572.0",
+    "@aws-sdk/types": "^3.567.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.3.16",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.12.11",
+    "@types/sinon": "^17.0.3",
+    "chai": "^5.1.0",
+    "mocha": "^10.4.0",
+    "sinon": "^17.0.2",
+    "typescript": "^5.4.5"
+  }
+}
