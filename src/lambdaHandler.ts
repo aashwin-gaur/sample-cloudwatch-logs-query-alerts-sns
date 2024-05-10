@@ -21,13 +21,13 @@ const FILTER_PATTERN = 'eventSource = "s3.amazonaws.com" and (userIdentity.type 
 const QUERY = `fields @timestamp, @log, @logStream, eventSource, eventTime,eventType, userIdentity.arn,userIdentity.principalId, requestParameters.bucketName,resources.0.ARN,resources.0.accountId,sourceIPAddress,managementEvent,readOnly
                 | filter ${FILTER_PATTERN}
                 | sort @timestamp desc
-                | limit 300`; // Adjust limit as needed
+                `;
 
 export async function lambdaHandler(event: any, context: any) {
     try {
         // Process the current EventBridge event
         const logEvents = await cwLogs.processEvent(LOG_GROUP_NAME, QUERY);
-        
+        console.log(logEvents);
         // Send the log events as an SNS email
         await snsMailer.sendEmail(logEvents, SNS_TOPIC_ARN);
 

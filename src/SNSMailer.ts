@@ -1,6 +1,7 @@
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 
 class SNSMailer {
+    private BATCH_SIZE = 200; //limited to 200 due to the 256 KB limit on SNS emails.
     private client: SNSClient;
 
     constructor(client: SNSClient) {
@@ -8,10 +9,9 @@ class SNSMailer {
     }
 
     async sendEmail(logEvents: any[], snsTopicArn: string) {
-        const batchSize = 300;
         const batches: any[] = [];
-        for (let i = 0; i < logEvents.length; i += batchSize) {
-            batches.push(logEvents.slice(i, i + batchSize));
+        for (let i = 0; i < logEvents.length; i += this.BATCH_SIZE) {
+            batches.push(logEvents.slice(i, i + this.BATCH_SIZE));
         }
 
         for (const batch of batches) {

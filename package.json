@@ -3,7 +3,7 @@
     "build": "tsc",
     "package": "npm run build && npm run zip && npm run layer-zip",
     
-    "zip": "mkdir -p build && zip -r -j build/lambda-package.zip dist/*",
+    "zip": "npm run build && mkdir -p build && zip -r -j build/lambda-package.zip dist/*",
     "layer-zip": "mkdir -p build && zip -r build/lambda-layer.zip node_modules" 
   },
 

@@ -10,7 +10,7 @@ class DLQProcessor {
     async processMessages(dlqUrl: string) {
         const params = {
             QueueUrl: dlqUrl,
-            MaxNumberOfMessages: 20 // Adjust according to your requirements
+            MaxNumberOfMessages: 10
         };
 
         try {
