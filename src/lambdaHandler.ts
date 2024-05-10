@@ -1,12 +1,10 @@
 import { CloudWatchLogsClient } from '@aws-sdk/client-cloudwatch-logs';
 import { SQSClient } from '@aws-sdk/client-sqs';
 import { SNSClient } from '@aws-sdk/client-sns';
-import CloudWatchLogsInsights from './CloudWatchLogsInsights';
-import DLQProcessor from './DLQProcessor';
-import SNSMailer from './SNSMailer';
-import { config, Event } from './config';
-import EventProcessor from './EventProcessor';
-import QUERY from './query';
+import DLQProcessor from './processors/DLQProcessor';
+import { Event } from './config';
+import EventProcessor from './processors/EventProcessor';
+import QUERY_STRING from './query';
 
 
 const cloudwatchLogsClient = new CloudWatchLogsClient({});
@@ -20,7 +18,7 @@ export async function lambdaHandler(event: Event, context: any) {
     try {
         
         // Process Main Event
-        eventProcessor.processEvent(event, QUERY);
+        eventProcessor.processEvent(event, QUERY_STRING);
         
         // Process messages from DLQ
         await dlqProcessor.processMessages();

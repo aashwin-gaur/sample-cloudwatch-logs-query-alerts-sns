@@ -32,7 +32,7 @@ class SNSMailer {
         try {
             const publishCommand = new PublishCommand(params);
             await this.client.send(publishCommand);
-            console.log("Email batch sent successfully.");
+            console.log("Email sent successfully.");
         } catch (err) {
             console.error("Error sending email batch:", err);
             throw err;

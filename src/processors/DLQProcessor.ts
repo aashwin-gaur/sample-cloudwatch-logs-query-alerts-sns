@@ -1,9 +1,10 @@
 import { SQSClient, ReceiveMessageCommand, DeleteMessageCommand, ReceiveMessageCommandOutput, Message } from '@aws-sdk/client-sqs';
-import { config, Event } from './config';
+import { config, Event } from '../config';
 import EventProcessor from './EventProcessor';
-import QUERY from './query';
+import QUERY_STRING from '../query';
 
 class DLQProcessor {
+    
     private client: SQSClient;
     private eventProcessor: EventProcessor;
 
@@ -45,7 +46,7 @@ class DLQProcessor {
         // Extract data from the message and process it
         const event: Event = JSON.parse((JSON.parse(message.Body!)).Payload!);
         console.log(`Found DLQ message for Payload : ${JSON.stringify(event)}`)
-        return this.eventProcessor.processEvent(event, QUERY);
+        return this.eventProcessor.processEvent(event, QUERY_STRING);
     }
 
     private async deleteMessage(dlqUrl: string, receiptHandle: string) {

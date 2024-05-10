@@ -1,5 +1,6 @@
 import { CloudWatchLogsClient, StartQueryCommand, GetQueryResultsCommand, QueryStatus } from '@aws-sdk/client-cloudwatch-logs';
 import { config } from './config';
+
 class CloudWatchLogsInsights {
     private TIME = (2 * 24 * 5) * config.DURATION_TO_QUERY_MINS * 60 * 1000;  // 48 hours before endTime
     private DELAY_FOR_RETRY_QUERY_RESULTS = 2 * 1000;
