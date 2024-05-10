@@ -22,7 +22,7 @@ export default async function CloudWatchLogsInsightsTest() {
                 });
 
                 const cwLogs = new CloudWatchLogsInsights(mockClient as any);
-                const logEvents = await cwLogs.processEvent('test-log-group', 'test-query');
+                const logEvents = await cwLogs.processEvent('test-log-group', 'test-query', new Date('2024-05-09T10:00:00Z'));
 
                 expect(logEvents).to.deep.equal([{ eventTime: new Date('2024-05-09T10:00:00Z'), message: 'Test message' }]);
             });

@@ -1,31 +1,38 @@
-import { SQSClient, ReceiveMessageCommand, DeleteMessageCommand, ReceiveMessageCommandOutput } from '@aws-sdk/client-sqs';
+import { SQSClient, ReceiveMessageCommand, DeleteMessageCommand, ReceiveMessageCommandOutput, Message } from '@aws-sdk/client-sqs';
+import { config, Event } from './config';
+import EventProcessor from './EventProcessor';
+import QUERY from './query';
 
 class DLQProcessor {
     private client: SQSClient;
+    private eventProcessor: EventProcessor;
 
-    constructor(client: SQSClient) {
+    constructor(client: SQSClient, eventProcessor: EventProcessor) {
         this.client = client;
+        this.eventProcessor = eventProcessor;
     }
 
-    async processMessages(dlqUrl: string) {
+    async processMessages() {
         const params = {
-            QueueUrl: dlqUrl,
-            MaxNumberOfMessages: 10
+            QueueUrl: config.DLQ_URL,
+            MaxNumberOfMessages: config.DLQ_MAX_MESSAGES_TO_PROCESS,
+            WaitTimeSeconds: config.DLQ_WAIT_TIME_SECONDS
         };
 
         try {
             const receiveMessageCommand = new ReceiveMessageCommand(params);
             const data: ReceiveMessageCommandOutput = await this.client.send(receiveMessageCommand);
-
-            if (data.Messages) {
-                for (const message of data.Messages) {
+            const messages: Message[] = data.Messages || [];
+            console.log(`Found ${messages.length} messages in the DLQ.`)
+            if (messages) {
+                for (const message of messages) {
                     // Process each message
                     const processedMessage = await this.processMessage(message);
-
-                    // If message processed successfully, delete it from the DLQ
-                    if (processedMessage) {
-                        await this.deleteMessage(dlqUrl, message.ReceiptHandle!);
-                    }
+                    await this.deleteMessage(config.DLQ_URL, message.ReceiptHandle!);
+                }
+                // If the number of received messages is equal to the requested MaxNumberOfMessages, retry
+                if (messages.length === config.DLQ_MAX_MESSAGES_TO_PROCESS) {
+                    await this.processMessages();
                 }
             }
         } catch (err) {
@@ -34,15 +41,11 @@ class DLQProcessor {
         }
     }
 
-    private async processMessage(message: any): Promise<boolean> {
+    private async processMessage(message: Message): Promise<any> {
         // Extract data from the message and process it
-        const eventData = JSON.parse(message.Body!);
-        // Example: const eventId = eventData.eventId;
-
-        // Perform your processing here
-        // You can reuse the function 'processCurrentEvent' by passing appropriate eventData
-
-        return true; // Return true if processing is successful
+        const event: Event = JSON.parse((JSON.parse(message.Body!)).Payload!);
+        console.log(`Found DLQ message for Payload : ${JSON.stringify(event)}`)
+        return this.eventProcessor.processEvent(event, QUERY);
     }
 
     private async deleteMessage(dlqUrl: string, receiptHandle: string) {
@@ -54,6 +57,7 @@ class DLQProcessor {
         try {
             const deleteMessageCommand = new DeleteMessageCommand(params);
             await this.client.send(deleteMessageCommand);
+            console.log("DLQ message deleted after successful processing.")
         } catch (err) {
             console.error("Error deleting DLQ message:", err);
             throw err;
