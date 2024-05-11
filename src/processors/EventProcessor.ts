@@ -1,23 +1,23 @@
-import CloudWatchLogsInsights from '../CloudWatchLogsInsights';
+import LogRetreivalService from '../services/LogRetreivalService';
 import { CloudWatchLogsClient } from '@aws-sdk/client-cloudwatch-logs';
 import { SNSClient } from '@aws-sdk/client-sns';
-import SNSMailer from '../SNSMailer';
+import EmailService from '../services/EmailService';
 import { config, Event } from '../config';
-
+import { MappedLogEvent } from '../types';
 class EventProcessor {
 
-    private cwLogs: CloudWatchLogsInsights;
+    private cwLogs: LogRetreivalService;
 
-    private snsMailer: SNSMailer
+    private snsMailer: EmailService
 
     constructor(cloudwatchLogsClient: CloudWatchLogsClient, snsClient: SNSClient) {
-        this.cwLogs = new CloudWatchLogsInsights(cloudwatchLogsClient);
-        this.snsMailer = new SNSMailer(snsClient);
+        this.cwLogs = new LogRetreivalService(cloudwatchLogsClient);
+        this.snsMailer = new EmailService(snsClient);
     }
 
     async processEvent(event: Event, queryString: string) : Promise<any>{
         // Process the current EventBridge event
-        const logEvents = await this.cwLogs.processEvent(config.LOG_GROUP_NAME, queryString, new Date(event.time));
+        const logEvents: MappedLogEvent[] = await this.cwLogs.processEvent(config.LOG_GROUP_NAME, queryString, new Date(event.time));
         console.log(logEvents);
 
         // Send the log events as an SNS email

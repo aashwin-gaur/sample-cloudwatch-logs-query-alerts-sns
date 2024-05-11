@@ -1,10 +1,10 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { CloudWatchLogsClient, StartQueryCommand, GetQueryResultsCommand } from '@aws-sdk/client-cloudwatch-logs';
-import CloudWatchLogsInsights from './CloudWatchLogsInsights';
+import LogRetreivalService from './LogRetreivalService';
 
-export default async function CloudWatchLogsInsightsTest() {
-    describe('CloudWatchLogsInsights', () => {
+export default async function LogRetreivalServiceTest() {
+    describe('LogRetreivalService', () => {
         describe('processEvent', () => {
             it('should return query results', async () => {
                 const mockClient = {
@@ -21,7 +21,7 @@ export default async function CloudWatchLogsInsightsTest() {
                     }
                 });
 
-                const cwLogs = new CloudWatchLogsInsights(mockClient as any);
+                const cwLogs = new LogRetreivalService(mockClient as any);
                 const logEvents = await cwLogs.processEvent('test-log-group', 'test-query', new Date('2024-05-09T10:00:00Z'));
 
                 expect(logEvents).to.deep.equal([{ eventTime: new Date('2024-05-09T10:00:00Z'), message: 'Test message' }]);
@@ -32,6 +32,6 @@ export default async function CloudWatchLogsInsightsTest() {
 
 if (require.main === module) {
     (async () => {
-        await CloudWatchLogsInsightsTest();
+        await LogRetreivalServiceTest();
     })();
 }

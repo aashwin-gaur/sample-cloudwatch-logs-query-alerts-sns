@@ -1,6 +1,6 @@
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 
-class SNSMailer {
+class EmailService {
     private BATCH_SIZE = 100; //limited to 200 due to the 256 KB limit on SNS emails.
     private client: SNSClient;
 
@@ -40,4 +40,4 @@ class SNSMailer {
     }
 }
 
-export default SNSMailer;
+export default EmailService;

@@ -1,10 +1,10 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
-import SNSMailer from './SNSMailer';
+import EmailService from './EmailService';
 
-export default async function SNSMailerTest() {
-    describe('SNSMailer', () => {
+export default async function EmailServiceTest() {
+    describe('EmailService', () => {
         describe('sendEmail', () => {
             it('should send email batches', async () => {
                 const mockClient = {
@@ -19,7 +19,7 @@ export default async function SNSMailerTest() {
                     }
                 });
 
-                const snsMailer = new SNSMailer(mockClient as any);
+                const snsMailer = new EmailService(mockClient as any);
                 const logEvents = Array.from({ length: 900 }, (_, i) => ({ eventTime: new Date(), message: `Message ${i}` }));
 
                 await snsMailer.sendEmail(logEvents as any[], 'test-sns-topic');
@@ -32,6 +32,6 @@ export default async function SNSMailerTest() {
 
 if (require.main === module) {
     (async () => {
-        await SNSMailerTest();
+        await EmailServiceTest();
     })();
 }

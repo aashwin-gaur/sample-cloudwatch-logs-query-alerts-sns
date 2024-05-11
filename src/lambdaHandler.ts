@@ -17,7 +17,7 @@ const dlqProcessor = new DLQProcessor(sqsClient, eventProcessor);
 export async function lambdaHandler(event: Event, context: any) {
     try {
         
-        // Process Main Event
+        // Process Triggering Event
         eventProcessor.processEvent(event, QUERY_STRING);
         
         // Process messages from DLQ

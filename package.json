@@ -2,8 +2,8 @@
   "scripts": {
     "build": "tsc",
     "package": "npm run build && npm run zip && npm run layer-zip",
-    "zip": "npm run build && mkdir -p build && zip -r -j build/lambda-package.zip dist/*",
-    "layer-zip": "mkdir -p build && zip -r build/lambda-layer.zip node_modules",
+    "zip": "npm run build && mkdir -p build && rm -rf build/lambda-package.zip && sh -c \"cd dist && zip -r ../build/lambda-package.zip *\"",
+    "layer-zip": "mkdir -p build && rm -rf build/lambda-layer.zip && zip -r build/lambda-layer.zip node_modules",
     "test": "mocha --require ts-node/register --require ./test-setup.ts \"src/**/*.test.ts\""
   },
   "dependencies": {

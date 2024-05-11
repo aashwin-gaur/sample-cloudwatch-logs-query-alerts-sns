@@ -1,16 +1,17 @@
 import { CloudWatchLogsClient, StartQueryCommand, GetQueryResultsCommand, QueryStatus } from '@aws-sdk/client-cloudwatch-logs';
-import { config } from './config';
+import { config } from '../config';
+import { DISCARD_FIELDS, KEY_MAPPINGS, MappedLogEvent, RawLogEvent } from '../types';
 
-class CloudWatchLogsInsights {
+class LogRetreivalService {
     private TIME = (2 * 24 * 5) * config.DURATION_TO_QUERY_MINS * 60 * 1000;  // 48 hours before endTime
-    private DELAY_FOR_RETRY_QUERY_RESULTS = 2 * 1000;
+    private DELAY_FOR_RETRY_QUERY_RESULTS_MILLIS = 2 * 1000;
     private client: CloudWatchLogsClient;
 
     constructor(client: CloudWatchLogsClient) {
         this.client = client;
     }
 
-    async processEvent(logGroupName: string, query: string, endTime: Date): Promise<any[]> {
+    async processEvent(logGroupName: string, query: string, endTime: Date): Promise<MappedLogEvent[]> {
         const startTime = new Date(endTime.getTime() - this.TIME);
 
         const startQueryParams = {
@@ -40,7 +41,7 @@ class CloudWatchLogsInsights {
         }
     }
 
-    private async getQueryResults(queryId: string): Promise<any[]> {
+    private async getQueryResults(queryId: string): Promise<MappedLogEvent[]> {
         const params = {
             queryId: queryId
         };
@@ -52,11 +53,15 @@ class CloudWatchLogsInsights {
                 const results = response.results || [];
                 console.log(`Found ${results.length} logs.`);
                 return results.map(
-                    row => row.reduce((acc, { field, value }) =>
-                        ({ ...acc, [field as string]: value }),
-                        {}));
+                    row => row
+                    .filter(k=> DISCARD_FIELDS.has(k.field as string))
+                    .reduce((acc, { field, value }) =>
+                        ({ ...acc, 
+                            [KEY_MAPPINGS[field as keyof typeof KEY_MAPPINGS] as string || field as string]
+                            : value }),
+                        {}) as MappedLogEvent);
             } else {
-                await new Promise(resolve => setTimeout(resolve, this.DELAY_FOR_RETRY_QUERY_RESULTS)); // Delay for 2 seconds
+                await new Promise(resolve => setTimeout(resolve, this.DELAY_FOR_RETRY_QUERY_RESULTS_MILLIS)); // Delay for 2 seconds
                 return this.getQueryResults(queryId);
             }
 
@@ -67,4 +72,4 @@ class CloudWatchLogsInsights {
     }
 }
 
-export default CloudWatchLogsInsights;
+export default LogRetreivalService;
