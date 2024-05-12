@@ -1,9 +1,7 @@
-import { CloudWatchLogsClient, StartQueryCommand, GetQueryResultsCommand, QueryStatus } from '@aws-sdk/client-cloudwatch-logs';
-import { config } from '../config';
-import { DISCARD_FIELDS, LogEvent } from '../types';
+import { CloudWatchLogsClient, StartQueryCommand, GetQueryResultsCommand, QueryStatus, StartQueryCommandInput } from '@aws-sdk/client-cloudwatch-logs';
+import { DISCARD_FIELDS, LogEvent, LogsQueryResult } from '../types';
 
 class LogRetreivalService {
-    private TIME = (2 * 24 * 5) * config.DURATION_TO_QUERY_MINS * 60 * 1000;  // 48 hours before endTime
     private DELAY_FOR_RETRY_QUERY_RESULTS_MILLIS = 2 * 1000;
     private client: CloudWatchLogsClient;
 
@@ -11,10 +9,9 @@ class LogRetreivalService {
         this.client = client;
     }
 
-    async processEvent(logGroupName: string, query: string, endTime: Date): Promise<LogEvent[]> {
-        const startTime = new Date(endTime.getTime() - this.TIME);
+    async processEvent(logGroupName: string, query: string, startTime: Date, endTime: Date): Promise<LogsQueryResult> {
 
-        const startQueryParams = {
+        const startQueryParams: StartQueryCommandInput = {
             logGroupName: logGroupName,
             startTime: startTime.getTime(),
             endTime: endTime.getTime(),
@@ -30,7 +27,7 @@ class LogRetreivalService {
 
             if (queryId) {
                 const queryResults = await this.getQueryResults(queryId);
-                return queryResults;
+                return { queryParams: startQueryParams, logEvents: queryResults };
 
             } else {
                 throw new Error("Query ID is undefined.");
@@ -54,10 +51,10 @@ class LogRetreivalService {
                 console.log(`Found ${results.length} logs.`);
                 return results.map(
                     row => row
-                    .filter(k=> DISCARD_FIELDS.has(k.field as string))
-                    .reduce((acc, { field, value }) =>
-                        ({ ...acc, [ field as string]: value }),
-                        {}) as LogEvent);
+                        .filter(k => DISCARD_FIELDS.has(k.field as string))
+                        .reduce((acc, { field, value }) =>
+                            ({ ...acc, [field as string]: value }),
+                            {}) as LogEvent);
             } else {
                 await new Promise(resolve => setTimeout(resolve, this.DELAY_FOR_RETRY_QUERY_RESULTS_MILLIS)); // Delay for 2 seconds
                 return this.getQueryResults(queryId);

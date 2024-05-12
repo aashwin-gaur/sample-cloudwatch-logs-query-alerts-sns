@@ -1,3 +1,5 @@
+import { StartQueryCommandInput } from "@aws-sdk/client-cloudwatch-logs";
+
 export const DISCARD_FIELDS : Set<string> = new Set([
     "@ptr"
 ]);
@@ -18,4 +20,9 @@ export interface LogEvent {
     readOnly: string;
     
     bucketName?: string
+}
+
+export interface LogsQueryResult {
+    queryParams: StartQueryCommandInput,
+    logEvents: LogEvent[]
 }

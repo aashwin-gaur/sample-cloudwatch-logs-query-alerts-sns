@@ -1,4 +1,5 @@
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
+import { LogsQueryResult } from '../types';
 
 class EmailService {
     private BATCH_SIZE = 100; //limited to 200 due to the 256 KB limit on SNS emails.
@@ -8,7 +9,8 @@ class EmailService {
         this.client = client;
     }
 
-    async sendEmail(logEvents: any[], snsTopicArn: string) {
+    async sendEmail(queryResult: LogsQueryResult, snsTopicArn: string) {
+        const logEvents = queryResult.logEvents; 
         const batches: any[] = [];
         for (let i = 0; i < logEvents.length; i += this.BATCH_SIZE) {
             batches.push(logEvents.slice(i, i + this.BATCH_SIZE));
@@ -18,7 +20,6 @@ class EmailService {
             const emailBody = batch.map((logEvent:any, index:any) => `Log Event ${index + 1}:\nEvent Time: ${logEvent.eventTime}\nMessage: ${logEvent.message}\n\n`).join('\n');
             await this.sendEmailBatch(emailBody, snsTopicArn);
         }
-
         console.log("All email batches sent successfully.");
     }
 
@@ -28,7 +29,6 @@ class EmailService {
             Subject: 'CloudWatch Logs Insights Query Results',
             TopicArn: snsTopicArn
         };
-
         try {
             const publishCommand = new PublishCommand(params);
             await this.client.send(publishCommand);
