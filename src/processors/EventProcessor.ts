@@ -3,7 +3,7 @@ import { CloudWatchLogsClient } from '@aws-sdk/client-cloudwatch-logs';
 import { SNSClient } from '@aws-sdk/client-sns';
 import EmailService from '../services/EmailService';
 import { config, Event } from '../config';
-import { MappedLogEvent } from '../types';
+import { LogEvent } from '../types';
 class EventProcessor {
 
     private cwLogs: LogRetreivalService;
@@ -17,7 +17,7 @@ class EventProcessor {
 
     async processEvent(event: Event, queryString: string) : Promise<any>{
         // Process the current EventBridge event
-        const logEvents: MappedLogEvent[] = await this.cwLogs.processEvent(config.LOG_GROUP_NAME, queryString, new Date(event.time));
+        const logEvents: LogEvent[] = await this.cwLogs.processEvent(config.LOG_GROUP_NAME, queryString, new Date(event.time));
         console.log(logEvents);
 
         // Send the log events as an SNS email

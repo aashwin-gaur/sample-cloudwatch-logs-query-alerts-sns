@@ -1,6 +1,6 @@
 import { CloudWatchLogsClient, StartQueryCommand, GetQueryResultsCommand, QueryStatus } from '@aws-sdk/client-cloudwatch-logs';
 import { config } from '../config';
-import { DISCARD_FIELDS, KEY_MAPPINGS, MappedLogEvent, RawLogEvent } from '../types';
+import { DISCARD_FIELDS, LogEvent } from '../types';
 
 class LogRetreivalService {
     private TIME = (2 * 24 * 5) * config.DURATION_TO_QUERY_MINS * 60 * 1000;  // 48 hours before endTime
@@ -11,7 +11,7 @@ class LogRetreivalService {
         this.client = client;
     }
 
-    async processEvent(logGroupName: string, query: string, endTime: Date): Promise<MappedLogEvent[]> {
+    async processEvent(logGroupName: string, query: string, endTime: Date): Promise<LogEvent[]> {
         const startTime = new Date(endTime.getTime() - this.TIME);
 
         const startQueryParams = {
@@ -41,7 +41,7 @@ class LogRetreivalService {
         }
     }
 
-    private async getQueryResults(queryId: string): Promise<MappedLogEvent[]> {
+    private async getQueryResults(queryId: string): Promise<LogEvent[]> {
         const params = {
             queryId: queryId
         };
@@ -56,10 +56,8 @@ class LogRetreivalService {
                     row => row
                     .filter(k=> DISCARD_FIELDS.has(k.field as string))
                     .reduce((acc, { field, value }) =>
-                        ({ ...acc, 
-                            [KEY_MAPPINGS[field as keyof typeof KEY_MAPPINGS] as string || field as string]
-                            : value }),
-                        {}) as MappedLogEvent);
+                        ({ ...acc, [ field as string]: value }),
+                        {}) as LogEvent);
             } else {
                 await new Promise(resolve => setTimeout(resolve, this.DELAY_FOR_RETRY_QUERY_RESULTS_MILLIS)); // Delay for 2 seconds
                 return this.getQueryResults(queryId);
