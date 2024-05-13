@@ -5,12 +5,12 @@ import EventProcessor from './EventProcessor';
 import LogRetreivalService from '../services/LogRetreivalService';
 import EmailService from '../services/EmailService';
 import { config } from '../config';
-import { LogEvent } from '../types';
+import { LogEvent, LogsQueryResult } from '../types';
 
 describe('EventProcessor', () => {
     let cloudwatchLogsClient: any;
     let snsClient: any;
-    let cwLogsInsights: LogRetreivalService;
+    let logRetreivalService: LogRetreivalService;
     let snsMailer: EmailService;
     let eventProcessor: EventProcessor;
 
@@ -58,8 +58,12 @@ describe('EventProcessor', () => {
                     readOnly: '1',
                   },
             ];
+            const stubResult = {
+                queryParams: {},
+                logEvents
+            } as LogsQueryResult;
             // Stub processEvent method of CloudWatchLogsInsights class
-            const processEventStub = sinon.stub(cwLogsInsights, 'processEvent').resolves(logEvents);
+            const processEventStub = sinon.stub(logRetreivalService, 'processEvent').resolves(stubResult);
 
             // Stub sendEmail method of SNSMailer class
             const sendEmailStub = sinon.stub(snsMailer, 'sendEmail').resolves();
@@ -68,8 +72,8 @@ describe('EventProcessor', () => {
 
             // Assertions
             expect(result).to.equal('Email sent successfully');
-            expect(processEventStub.calledOnceWithExactly(config.LOG_GROUP_NAME, queryString, new Date(event.time))).to.be.true;
-            expect(sendEmailStub.calledOnceWithExactly(logEvents, config.SNS_TOPIC_ARN)).to.be.true;
+            expect(processEventStub.calledOnceWithExactly(config.LOG_GROUP_NAME, queryString, new Date(event.time), new Date(event.time))).to.be.true;
+            expect(sendEmailStub.calledOnceWithExactly(stubResult, config.SNS_TOPIC_ARN)).to.be.true;
         });
     });
 });

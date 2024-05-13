@@ -2,7 +2,7 @@ import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 import { LogsQueryResult } from '../types';
 
 class EmailService {
-    private BATCH_SIZE = 100; //limited to 200 due to the 256 KB limit on SNS emails.
+    private BATCH_SIZE = 100; //limited to 100 due to the 256 KB limit on SNS emails.
     private client: SNSClient;
 
     constructor(client: SNSClient) {
