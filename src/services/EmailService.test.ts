@@ -1,37 +1,35 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 import EmailService from './EmailService';
+import { SNSClient, PublishCommand, PublishBatchCommandInput, PublishCommandInput } from '@aws-sdk/client-sns';
+import { LogEvent, LogsQueryResult } from '../types';
+import { StartQueryCommandInput } from '@aws-sdk/client-cloudwatch-logs';
 
-export default async function EmailServiceTest() {
-    describe('EmailService', () => {
-        describe('sendEmail', () => {
-            it('should send email batches', async () => {
-                const mockClient = {
-                    send: sinon.stub().resolves({})
-                };
+describe('EmailService', () => {
+    describe('sendEmail', () => {
+        it('should send emails in batches', async () => {
+            // Mock dependencies
+            const snsClient = new SNSClient({});
+            const emailService = new EmailService(snsClient);
 
-                sinon.stub(SNSClient.prototype, 'send').callsFake((command) => {
-                    if (command instanceof PublishCommand) {
-                        return {};
-                    } else {
-                        throw new Error('Unexpected command');
-                    }
-                });
+            // Stub the SNSClient send method
+            const sendStub = sinon.stub(snsClient, 'send');
 
-                const snsMailer = new EmailService(mockClient as any);
-                const logEvents = Array.from({ length: 900 }, (_, i) => ({ eventTime: new Date(), message: `Message ${i}` }));
+            // Prepare test data
+            const logEvents = Array.from({ length: 250 }, (_, i) => ({ timestamp: `2024-05-08T12:00:0${i}Z`, eventType: `Log event ${i}` } as Partial<LogEvent> as LogEvent));
+            const queryResult: LogsQueryResult = { queryParams: {} as Partial<StartQueryCommandInput> as StartQueryCommandInput, logEvents: logEvents };
 
-                await snsMailer.sendEmail(logEvents as any[], 'test-sns-topic');
+            // Call sendEmail method
+            await emailService.sendEmail(queryResult);
 
-                expect(mockClient.send.callCount).to.equal(3); // Three email batches for 900 messages
-            });
+            // Assertions
+            expect(sendStub.callCount).to.equal(3); // 250 log events in batches of 100 => 3 batches
+            expect(sendStub.getCall(0).args[0]).to.be.instanceOf(PublishCommand);
+            expect(sendStub.getCall(1).args[0]).to.be.instanceOf(PublishCommand);
+            expect(sendStub.getCall(2).args[0]).to.be.instanceOf(PublishCommand);
+
+            // Restore the stub
+            sendStub.restore();
         });
     });
-}
-
-if (require.main === module) {
-    (async () => {
-        await EmailServiceTest();
-    })();
-}
+});
