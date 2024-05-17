@@ -16,7 +16,7 @@ class EventProcessor {
         this.emailService = emailService;
     }
 
-    async processEvent(event: Event, queryString: string) : Promise<any>{
+    async processEvent(event: Event) : Promise<any>{
         const endTime = new Date(event.time)
         const startTime = new Date(endTime.getTime() - this.TIME);
 

@@ -1,32 +1,14 @@
-import { CloudWatchLogsClient } from '@aws-sdk/client-cloudwatch-logs';
-import { SQSClient } from '@aws-sdk/client-sqs';
-import { SNSClient } from '@aws-sdk/client-sns';
-import DLQProcessor from './processors/DLQProcessor';
+
+import createECSLogger from './logger'
 import { Event } from './config';
-import EventProcessor from './processors/EventProcessor';
-import QUERY_STRING from './query';
-
-
-const cloudwatchLogsClient = new CloudWatchLogsClient({});
-const snsClient = new SNSClient({});
-const sqsClient = new SQSClient({});
-
-const eventProcessor = new EventProcessor(cloudwatchLogsClient, snsClient);
-const dlqProcessor = new DLQProcessor(sqsClient, eventProcessor);
+import { dependencies } from './processors';
 
 export async function lambdaHandler(event: Event, context: any) {
-    try {
-        
-        // Process Triggering Event
-        eventProcessor.processEvent(event, QUERY_STRING);
-        
-        // Process messages from DLQ
-        await dlqProcessor.processMessages();
+    const log = createECSLogger();
+    
+    await dependencies.eventProcessor.processEvent(event);
+    await dependencies.dlqProcessor.processMessages();
 
-        return { statusCode: 200 };
-    } catch (err) {
-        console.error("Error:", err);
-        throw err;
-    }
+    log.debug("test")
 
 }
